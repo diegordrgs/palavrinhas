@@ -1,3 +1,5 @@
+import * as store from './store.js';
+
 const CATEGORIES = [
   { id: 'familia', label: 'Família' },
   { id: 'animais', label: 'Animais' },
@@ -13,7 +15,8 @@ const state = {
   search: '',
   category: null,
   editing: null, // palavra em edição (ou null para nova)
-  image: undefined, // data URL nova, null para remover, undefined para manter
+  image: undefined, // Blob novo, null para remover, undefined para manter
+  previewUrl: null,
 };
 
 const $ = (sel) => document.querySelector(sel);
@@ -60,19 +63,7 @@ function scallopPath(w, h, inset, bump) {
 
 const CARD_FRAME = scallopPath(200, 300, 7, 5.5);
 
-async function api(path, options = {}) {
-  const res = await fetch(path, {
-    headers: { 'Content-Type': 'application/json' },
-    ...options,
-  });
-  if (!res.ok) {
-    const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || 'Algo deu errado');
-  }
-  return res.status === 204 ? null : res.json();
-}
-
-// Reduz a imagem no navegador antes de enviar, para o banco ficar leve.
+// Reduz a imagem no navegador antes de enviar, para o armazenamento ficar leve.
 function resizeImage(file) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -84,9 +75,8 @@ function resizeImage(file) {
       canvas.width = Math.round(img.width * scale);
       canvas.height = Math.round(img.height * scale);
       canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
-      let data = canvas.toDataURL('image/webp', 0.9);
-      if (!data.startsWith('data:image/webp')) data = canvas.toDataURL('image/png');
-      resolve(data);
+      // Safari antigo não gera webp; nesse caso o toBlob devolve png.
+      canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error('Não consegui ler essa imagem'))), 'image/webp', 0.9);
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
@@ -342,6 +332,8 @@ function render() {
 // ---------- Formulário ----------
 
 function setPreview(src) {
+  if (state.previewUrl) URL.revokeObjectURL(state.previewUrl);
+  state.previewUrl = src?.startsWith('blob:') ? src : null;
   const img = $('#photo-preview');
   img.hidden = !src;
   $('#photo-hint').hidden = Boolean(src);
@@ -371,7 +363,7 @@ async function handleFile(file) {
   if (!file || !file.type.startsWith('image/')) return;
   try {
     state.image = await resizeImage(file);
-    setPreview(state.image);
+    setPreview(URL.createObjectURL(state.image));
   } catch (err) {
     $('#form-error').textContent = err.message;
   }
@@ -389,22 +381,20 @@ form.addEventListener('submit', async (e) => {
     $('#form-error').textContent = 'Escreva a palavrinha 🙂';
     return $('#f-name').focus();
   }
-  if (state.image !== undefined) payload.image = state.image;
 
   const save = $('#save');
   save.disabled = true;
+  save.textContent = 'Guardando...';
   try {
-    if (state.editing) {
-      await api(`/api/words/${state.editing.id}`, { method: 'PUT', body: JSON.stringify(payload) });
-    } else {
-      await api('/api/words', { method: 'POST', body: JSON.stringify(payload) });
-    }
+    if (state.editing) await store.updateWord(state.editing, payload, state.image);
+    else await store.createWord(payload, state.image ?? null);
     modal.close();
     await load();
   } catch (err) {
     $('#form-error').textContent = err.message;
   } finally {
     save.disabled = false;
+    save.textContent = 'Guardar';
   }
 });
 
@@ -412,7 +402,7 @@ $('#delete-word').addEventListener('click', async () => {
   const word = state.editing;
   if (!word || !confirm(`Apagar a palavrinha "${word.name}"?`)) return;
   try {
-    await api(`/api/words/${word.id}`, { method: 'DELETE' });
+    await store.deleteWord(word);
     modal.close();
     await load();
   } catch (err) {
@@ -459,7 +449,7 @@ $('#search').addEventListener('input', (e) => {
 
 async function load() {
   try {
-    state.words = await api('/api/words');
+    state.words = await store.listWords();
     render();
   } catch (err) {
     board.innerHTML = '<p class="empty"></p>';
@@ -475,6 +465,49 @@ new ResizeObserver(([entry]) => {
   modalFrame.setAttribute('viewBox', `0 0 ${width} ${height}`);
   modalFrame.querySelector('.frame-path').setAttribute('d', scallopPath(width, height, 8, 7));
 }).observe(form);
+// ---------- Login ----------
+
+function show(view) {
+  document.body.dataset.view = view;
+}
+
+$('#login-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const button = $('#login-button');
+  const error = $('#login-error');
+  error.textContent = '';
+  button.disabled = true;
+  try {
+    await store.signIn($('#login-email').value.trim(), $('#login-password').value);
+  } catch (err) {
+    error.textContent = err.message;
+  } finally {
+    button.disabled = false;
+  }
+});
+
+$('#logout').addEventListener('click', () => store.signOut());
+
+let loggedIn = null; // null até sabermos se há sessão
+function setUser(user) {
+  if (Boolean(user) === loggedIn) return;
+  loggedIn = Boolean(user);
+  if (user) {
+    show('app');
+    load();
+  } else {
+    state.words = [];
+    show('login');
+    $('#login-password').value = '';
+  }
+}
+
 renderTitle();
 renderFilters();
-load();
+
+if (!store.configured) {
+  show('setup');
+} else {
+  store.onAuthChange(setUser);
+  setUser(await store.currentUser());
+}

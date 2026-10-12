@@ -166,6 +166,55 @@ button, input, textarea { font: inherit; color: var(--ink); }
 .chip[aria-pressed="true"] { background: var(--bg, #f3ece5); }
 .chip:focus-visible { outline: 3px dashed var(--c, var(--animais)); outline-offset: 2px; }
 
+/* ---------- Telas (login, configuração, app) ---------- */
+
+body:not([data-view="app"]) .app-only,
+body:not([data-view="login"]) .login-only,
+body:not([data-view="setup"]) .setup-only { display: none !important; }
+
+.logout {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  padding: 2px 10px;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  color: var(--ink-soft);
+  text-decoration: underline wavy var(--coral-soft);
+}
+
+.gate {
+  display: grid;
+  place-items: center;
+  padding: 24px 16px 80px;
+}
+
+.gate-card {
+  width: min(380px, 100%);
+  padding: 28px 30px 30px;
+  background: #fff;
+  border: 3px dashed var(--coral-soft);
+  border-radius: 28px 16px 30px 14px;
+  box-shadow: 4px 6px 0 rgba(91, 81, 96, .06);
+  text-align: center;
+}
+.gate-card .field { text-align: left; }
+.gate-card p { color: var(--ink-soft); line-height: 1.35; }
+.gate-card code { font-size: 15px; background: var(--comidas-bg); padding: 1px 6px; border-radius: 6px; }
+
+.gate-title {
+  margin: 0 0 6px;
+  font-family: var(--brush);
+  font-weight: 400;
+  font-size: 32px;
+  color: var(--coral);
+}
+
+.gate-button { width: 100%; margin-top: 4px; }
+
+.btn:disabled { opacity: .6; cursor: wait; transform: none; }
+
 /* ---------- Corpo ---------- */
 
 .layout {
