@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Caveat+Brush&family=Patrick+Hand&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
-<body data-view="loading">
+<body data-mode="view">
   <!-- Filtros SVG que dão o traço de giz de cera -->
   <svg class="defs" aria-hidden="true" width="0" height="0">
     <defs>
@@ -54,48 +54,25 @@
       <path filter="url(#crayon)" d="M6 12 C 80 2, 160 18, 230 9 S 360 4, 394 11"
         stroke="#f4a7a0" stroke-width="7" fill="none" stroke-linecap="round"/>
     </svg>
-    <p class="subtitle app-only" id="counter"></p>
+    <p class="subtitle" id="counter"></p>
 
-    <button class="logout app-only" id="logout" type="button">sair</button>
+    <button class="corner-link view-only" id="connect" type="button">entrar para editar</button>
+    <button class="corner-link edit-only" id="disconnect" type="button">sair da edição</button>
 
-    <div class="toolbar app-only">
+    <div class="toolbar">
       <label class="search">
         <svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></g></svg>
         <input id="search" type="search" placeholder="Procurar palavrinha..." autocomplete="off">
       </label>
-      <button class="btn btn-primary" id="new-word" type="button">
+      <button class="btn btn-primary edit-only" id="new-word" type="button">
         <span aria-hidden="true">+</span> Nova palavra
       </button>
     </div>
 
-    <nav class="filters app-only" id="filters" aria-label="Categorias"></nav>
+    <nav class="filters" id="filters" aria-label="Categorias"></nav>
   </header>
 
-  <section class="gate login-only" aria-labelledby="login-title">
-    <form class="gate-card" id="login-form">
-      <h2 class="gate-title" id="login-title">Oi! Quem está aí?</h2>
-      <label class="field">
-        <span>E-mail</span>
-        <input type="email" id="login-email" autocomplete="username" required>
-      </label>
-      <label class="field">
-        <span>Senha</span>
-        <input type="password" id="login-password" autocomplete="current-password" required>
-      </label>
-      <p class="form-error" id="login-error" role="alert"></p>
-      <button class="btn btn-primary gate-button" id="login-button" type="submit">Entrar</button>
-    </form>
-  </section>
-
-  <section class="gate setup-only">
-    <div class="gate-card">
-      <h2 class="gate-title">Quase lá!</h2>
-      <p>Falta ligar a página ao Supabase: preencha <code>public/config.js</code> com a URL e a chave
-        anon do seu projeto. O passo a passo está no README.</p>
-    </div>
-  </section>
-
-  <div class="layout app-only">
+  <div class="layout">
     <aside class="timeline" aria-label="Navegar pelas datas">
       <h2 class="timeline-title">Linha do tempo</h2>
       <ol class="timeline-list" id="timeline"></ol>
@@ -156,8 +133,35 @@
     </form>
   </dialog>
 
+  <!-- Token do GitHub para poder salvar -->
+  <dialog class="modal" id="token-modal">
+    <form method="dialog" class="modal-card" id="token-form" novalidate>
+      <svg class="modal-frame" viewBox="0 0 400 600" preserveAspectRatio="none" aria-hidden="true">
+        <path class="frame-path" filter="url(#wobbly)"/>
+      </svg>
+      <div class="modal-body">
+        <h2 class="modal-title">Entrar para editar</h2>
+        <p class="hint">
+          As palavrinhas são guardadas no próprio repositório do GitHub. Para salvar, cole um
+          <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">token do GitHub</a>
+          com permissão <b>Contents: Read and write</b> só neste repositório. Ele fica guardado apenas neste aparelho.
+        </p>
+        <label class="field">
+          <span>Token</span>
+          <input type="password" id="token-input" required autocomplete="off" placeholder="github_pat_...">
+        </label>
+        <p class="form-error" id="token-error" role="alert"></p>
+        <div class="modal-actions">
+          <span class="spacer"></span>
+          <button type="button" class="btn" id="token-cancel">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="token-save">Entrar</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
   <template id="card-template">
-    <article class="card" tabindex="0">
+    <article class="card">
       <svg class="card-frame" viewBox="0 0 200 300" preserveAspectRatio="none" aria-hidden="true">
         <path class="frame-path" filter="url(#wobbly)"/>
       </svg>
@@ -170,7 +174,6 @@
     </article>
   </template>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.2/dist/umd/supabase.js"></script>
   <script src="app.js" type="module"></script>
 </body>
 </html>

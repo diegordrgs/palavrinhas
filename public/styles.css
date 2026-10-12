@@ -166,13 +166,12 @@ button, input, textarea { font: inherit; color: var(--ink); }
 .chip[aria-pressed="true"] { background: var(--bg, #f3ece5); }
 .chip:focus-visible { outline: 3px dashed var(--c, var(--animais)); outline-offset: 2px; }
 
-/* ---------- Telas (login, configuração, app) ---------- */
+/* ---------- Modo visita x modo edição ---------- */
 
-body:not([data-view="app"]) .app-only,
-body:not([data-view="login"]) .login-only,
-body:not([data-view="setup"]) .setup-only { display: none !important; }
+body:not([data-mode="edit"]) .edit-only,
+body:not([data-mode="view"]) .view-only { display: none !important; }
 
-.logout {
+.corner-link {
   position: absolute;
   top: 14px;
   left: 16px;
@@ -180,38 +179,14 @@ body:not([data-view="setup"]) .setup-only { display: none !important; }
   background: none;
   border: 0;
   cursor: pointer;
+  font-size: 16px;
   color: var(--ink-soft);
   text-decoration: underline wavy var(--coral-soft);
 }
 
-.gate {
-  display: grid;
-  place-items: center;
-  padding: 24px 16px 80px;
-}
-
-.gate-card {
-  width: min(380px, 100%);
-  padding: 28px 30px 30px;
-  background: #fff;
-  border: 3px dashed var(--coral-soft);
-  border-radius: 28px 16px 30px 14px;
-  box-shadow: 4px 6px 0 rgba(91, 81, 96, .06);
-  text-align: center;
-}
-.gate-card .field { text-align: left; }
-.gate-card p { color: var(--ink-soft); line-height: 1.35; }
-.gate-card code { font-size: 15px; background: var(--comidas-bg); padding: 1px 6px; border-radius: 6px; }
-
-.gate-title {
-  margin: 0 0 6px;
-  font-family: var(--brush);
-  font-weight: 400;
-  font-size: 32px;
-  color: var(--coral);
-}
-
-.gate-button { width: 100%; margin-top: 4px; }
+.hint { margin: 0 0 4px; color: var(--ink-soft); line-height: 1.35; font-size: 17px; }
+.hint a { color: var(--coral); }
+.hint b { font-weight: 400; color: var(--ink); }
 
 .btn:disabled { opacity: .6; cursor: wait; transform: none; }
 
@@ -330,7 +305,6 @@ body:not([data-view="setup"]) .setup-only { display: none !important; }
   --bg: var(--outros-bg);
   position: relative;
   aspect-ratio: 2 / 3;
-  cursor: pointer;
   outline: none;
   transition: transform .25s cubic-bezier(.3, 1.6, .5, 1);
   animation: pop .45s cubic-bezier(.3, 1.6, .5, 1) both;
@@ -339,6 +313,8 @@ body:not([data-view="setup"]) .setup-only { display: none !important; }
 .card:nth-child(even) { transform: rotate(.9deg); }
 .card:hover, .card:focus-visible { transform: rotate(0) translateY(-6px) scale(1.02); }
 .card:focus-visible .frame-path { stroke-width: 6; }
+
+body[data-mode="edit"] .card { cursor: pointer; }
 
 @keyframes pop { from { opacity: 0; transform: scale(.9); } }
 

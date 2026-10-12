@@ -169,7 +169,7 @@ function createCard(word) {
   const node = $('#card-template').content.firstElementChild.cloneNode(true);
   node.dataset.category = word.category;
   node.querySelector('.frame-path').setAttribute('d', CARD_FRAME);
-  node.setAttribute('aria-label', `${word.name}, ${CATEGORY_LABEL[word.category]}. Abrir para editar`);
+  node.setAttribute('aria-label', `${word.name}, ${CATEGORY_LABEL[word.category]}`);
 
   const art = node.querySelector('.card-art');
   if (word.image) {
@@ -189,13 +189,18 @@ function createCard(word) {
   node.querySelector('.card-caption').textContent = word.caption;
   node.querySelector('.card-tag').textContent = CATEGORY_LABEL[word.category];
 
-  node.addEventListener('click', () => openModal(word));
-  node.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      openModal(word);
-    }
-  });
+  if (store.canEdit()) {
+    node.tabIndex = 0;
+    node.setAttribute('role', 'button');
+    node.setAttribute('aria-label', `${word.name}, ${CATEGORY_LABEL[word.category]}. Abrir para editar`);
+    node.addEventListener('click', () => openModal(word));
+    node.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        openModal(word);
+      }
+    });
+  }
   return node;
 }
 
@@ -218,7 +223,7 @@ function renderEmpty() {
   wrap.querySelector('p').textContent = filtering
     ? 'Nenhuma palavrinha encontrada por aqui.'
     : 'Ainda não tem nenhuma palavrinha. Que tal a primeira?';
-  if (!filtering) {
+  if (!filtering && store.canEdit()) {
     const b = document.createElement('button');
     b.className = 'btn btn-primary';
     b.innerHTML = '<span aria-hidden="true">+</span> Nova palavra';
@@ -386,10 +391,11 @@ form.addEventListener('submit', async (e) => {
   save.disabled = true;
   save.textContent = 'Guardando...';
   try {
-    if (state.editing) await store.updateWord(state.editing, payload, state.image);
-    else await store.createWord(payload, state.image ?? null);
+    state.words = state.editing
+      ? await store.updateWord(state.editing, payload, state.image)
+      : await store.createWord(payload, state.image ?? null);
     modal.close();
-    await load();
+    render();
   } catch (err) {
     $('#form-error').textContent = err.message;
   } finally {
@@ -402,9 +408,9 @@ $('#delete-word').addEventListener('click', async () => {
   const word = state.editing;
   if (!word || !confirm(`Apagar a palavrinha "${word.name}"?`)) return;
   try {
-    await store.deleteWord(word);
+    state.words = await store.deleteWord(word);
     modal.close();
-    await load();
+    render();
   } catch (err) {
     $('#form-error').textContent = err.message;
   }
@@ -457,57 +463,61 @@ async function load() {
   }
 }
 
-// A moldura do formulário acompanha o tamanho real dele, para as ondinhas não esticarem.
-const modalFrame = $('.modal-frame');
-new ResizeObserver(([entry]) => {
-  const { width, height } = entry.contentRect;
-  if (!width || !height) return;
-  modalFrame.setAttribute('viewBox', `0 0 ${width} ${height}`);
-  modalFrame.querySelector('.frame-path').setAttribute('d', scallopPath(width, height, 8, 7));
-}).observe(form);
-// ---------- Login ----------
-
-function show(view) {
-  document.body.dataset.view = view;
+// As molduras dos formulários acompanham o tamanho real deles, para as ondinhas não esticarem.
+for (const frame of document.querySelectorAll('.modal-frame')) {
+  new ResizeObserver(([entry]) => {
+    const { width, height } = entry.contentRect;
+    if (!width || !height) return;
+    frame.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    frame.querySelector('.frame-path').setAttribute('d', scallopPath(width, height, 8, 7));
+  }).observe(frame.parentElement);
 }
 
-$('#login-form').addEventListener('submit', async (e) => {
+// ---------- Modo de edição (token do GitHub) ----------
+
+const tokenModal = $('#token-modal');
+
+function applyMode() {
+  document.body.dataset.mode = store.canEdit() ? 'edit' : 'view';
+}
+
+$('#connect').addEventListener('click', () => {
+  $('#token-form').reset();
+  $('#token-error').textContent = '';
+  tokenModal.showModal();
+  $('#token-input').focus();
+});
+
+$('#token-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  const button = $('#login-button');
-  const error = $('#login-error');
-  error.textContent = '';
+  const button = $('#token-save');
+  $('#token-error').textContent = '';
   button.disabled = true;
   try {
-    await store.signIn($('#login-email').value.trim(), $('#login-password').value);
+    await store.connect($('#token-input').value);
+    tokenModal.close();
+    applyMode();
+    await load();
   } catch (err) {
-    error.textContent = err.message;
+    $('#token-error').textContent = err.message;
   } finally {
     button.disabled = false;
   }
 });
 
-$('#logout').addEventListener('click', () => store.signOut());
+$('#token-cancel').addEventListener('click', () => tokenModal.close());
+tokenModal.addEventListener('click', (e) => {
+  if (e.target === tokenModal) tokenModal.close();
+});
 
-let loggedIn = null; // null até sabermos se há sessão
-function setUser(user) {
-  if (Boolean(user) === loggedIn) return;
-  loggedIn = Boolean(user);
-  if (user) {
-    show('app');
-    load();
-  } else {
-    state.words = [];
-    show('login');
-    $('#login-password').value = '';
-  }
-}
+$('#disconnect').addEventListener('click', async () => {
+  if (!confirm('Sair do modo de edição neste aparelho?')) return;
+  store.disconnect();
+  applyMode();
+  await load();
+});
 
 renderTitle();
 renderFilters();
-
-if (!store.configured) {
-  show('setup');
-} else {
-  store.onAuthChange(setUser);
-  setUser(await store.currentUser());
-}
+applyMode();
+load();

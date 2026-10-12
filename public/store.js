@@ -1,123 +1,236 @@
-// Acesso ao Supabase: login, palavras (tabela "words") e imagens (bucket "imagens").
-import { SUPABASE_URL, SUPABASE_ANON_KEY } from './config.js';
+// As palavrinhas moram no próprio repositório:
+//   public/data/palavras.json  → a lista de palavras
+//   public/data/imagens/       → as imagens
+// Qualquer um lê o arquivo publicado junto com o site. Para criar, editar ou apagar,
+// a página faz um commit pela API do GitHub com um token guardado só neste navegador.
+import { GITHUB_OWNER, GITHUB_REPO } from './config.js';
 
-const BUCKET = 'imagens';
-const SIGNED_URL_TTL = 60 * 60 * 6; // 6 horas
+const DATA_DIR = 'public/data';
+const DATA_FILE = `${DATA_DIR}/palavras.json`;
+const TOKEN_KEY = 'palavrinhas:github-token';
+const API = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}`;
 
-export const configured = !SUPABASE_URL.includes('SEU-PROJETO') && !SUPABASE_ANON_KEY.includes('COLE-AQUI');
+let token = readToken();
+let branch = null;
+let lastCommit = null; // último commit lido ou gravado, para montar links das imagens
 
-const client = configured ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
-
-function check({ data, error }) {
-  if (error) throw new Error(translate(error.message));
-  return data;
+function readToken() {
+  try {
+    return localStorage.getItem(TOKEN_KEY);
+  } catch {
+    return null;
+  }
 }
 
-function translate(message) {
-  if (/invalid login credentials/i.test(message)) return 'E-mail ou senha incorretos';
-  if (/email not confirmed/i.test(message)) return 'Confirme o e-mail antes de entrar';
-  if (/jwt|not authenticated|row-level security/i.test(message)) return 'Sua sessão expirou, entre de novo';
-  return message;
+export function canEdit() {
+  return Boolean(token);
 }
 
-// ---------- Login ----------
+// ---------- API do GitHub ----------
 
-export async function currentUser() {
-  const { data } = await client.auth.getSession();
-  return data.session?.user ?? null;
+async function gh(path, options = {}) {
+  const res = await fetch(path.startsWith('http') ? path : API + path, {
+    cache: 'no-store',
+    ...options,
+    headers: {
+      Accept: 'application/vnd.github+json',
+      Authorization: `Bearer ${token}`,
+      'X-GitHub-Api-Version': '2022-11-28',
+      ...(options.body ? { 'Content-Type': 'application/json' } : {}),
+      ...options.headers,
+    },
+  });
+  if (!res.ok) {
+    const err = new Error(ghMessage(res.status));
+    err.status = res.status;
+    throw err;
+  }
+  return res.status === 204 ? null : res.json();
 }
 
-export function onAuthChange(callback) {
-  client.auth.onAuthStateChange((_event, session) => callback(session?.user ?? null));
+function ghMessage(status) {
+  if (status === 401) return 'O token não é válido (ou expirou)';
+  if (status === 403 || status === 404) return 'O token não tem permissão para gravar neste repositório';
+  if (status === 409 || status === 422) return 'Outra pessoa salvou ao mesmo tempo, tente de novo';
+  return `O GitHub respondeu com erro ${status}`;
 }
 
-export async function signIn(email, password) {
-  check(await client.auth.signInWithPassword({ email, password }));
+export async function connect(newToken) {
+  const previous = token;
+  token = newToken.trim();
+  try {
+    const repo = await gh('');
+    if (!repo.permissions?.push) throw new Error('O token não tem permissão para gravar neste repositório');
+    branch = repo.default_branch;
+  } catch (err) {
+    token = previous;
+    throw err;
+  }
+  try {
+    localStorage.setItem(TOKEN_KEY, token);
+  } catch {
+    // Sem localStorage o token vale só até fechar a página.
+  }
 }
 
-export async function signOut() {
-  await client.auth.signOut();
+export function disconnect() {
+  token = null;
+  branch = null;
+  try {
+    localStorage.removeItem(TOKEN_KEY);
+  } catch {}
+}
+
+async function defaultBranch() {
+  branch ??= (await gh('')).default_branch;
+  return branch;
+}
+
+function utf8ToBase64(text) {
+  return bytesToBase64(new TextEncoder().encode(text));
+}
+
+function bytesToBase64(bytes) {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  }
+  return btoa(binary);
+}
+
+function base64ToUtf8(b64) {
+  const binary = atob(b64.replace(/\n/g, ''));
+  return new TextDecoder().decode(Uint8Array.from(binary, (c) => c.charCodeAt(0)));
+}
+
+// Lê a lista como está num commit específico.
+async function readAt(commitSha) {
+  try {
+    const file = await gh(`/contents/${DATA_FILE}?ref=${commitSha}`);
+    return JSON.parse(base64ToUtf8(file.content));
+  } catch (err) {
+    if (err.status === 404) return [];
+    throw err;
+  }
+}
+
+// Aplica uma mudança e grava tudo (lista + imagens) num único commit.
+// Se alguém salvou no meio do caminho, relê e tenta de novo.
+async function commit(message, change, { add = [], remove = [] } = {}) {
+  const ref = `/git/refs/heads/${encodeURIComponent(await defaultBranch())}`;
+  const blobs = await Promise.all(
+    add.map(async ({ path, blob }) => {
+      const bytes = new Uint8Array(await blob.arrayBuffer());
+      const { sha } = await gh('/git/blobs', {
+        method: 'POST',
+        body: JSON.stringify({ content: bytesToBase64(bytes), encoding: 'base64' }),
+      });
+      return { path, sha };
+    })
+  );
+
+  for (let attempt = 0; ; attempt++) {
+    const head = await gh(ref);
+    const parent = await gh(`/git/commits/${head.object.sha}`);
+    const words = change(await readAt(head.object.sha));
+    const tree = await gh('/git/trees', {
+      method: 'POST',
+      body: JSON.stringify({
+        base_tree: parent.tree.sha,
+        tree: [
+          { path: DATA_FILE, mode: '100644', type: 'blob', content: JSON.stringify(words, null, 2) + '\n' },
+          ...blobs.map(({ path, sha }) => ({ path, mode: '100644', type: 'blob', sha })),
+          ...remove.map((path) => ({ path, mode: '100644', type: 'blob', sha: null })),
+        ],
+      }),
+    });
+    const created = await gh('/git/commits', {
+      method: 'POST',
+      body: JSON.stringify({ message, tree: tree.sha, parents: [head.object.sha] }),
+    });
+    try {
+      await gh(ref, { method: 'PATCH', body: JSON.stringify({ sha: created.sha }) });
+      lastCommit = created.sha;
+      return words;
+    } catch (err) {
+      if (err.status !== 422 || attempt >= 2) throw err;
+    }
+  }
 }
 
 // ---------- Palavras ----------
 
-function toWord(row, urls) {
-  return {
-    id: row.id,
-    name: row.name,
-    caption: row.caption,
-    category: row.category,
-    date: row.learned_on,
-    imagePath: row.image_path,
-    image: row.image_path ? urls.get(row.image_path) ?? null : null,
-  };
+function imageUrl(path) {
+  if (!path) return null;
+  // Logo depois de salvar, o site ainda não foi republicado; o arquivo cru do GitHub já existe.
+  return canEdit()
+    ? `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${lastCommit ?? branch}/${DATA_DIR}/${path}`
+    : `data/${path}`;
 }
 
-async function signedUrls(paths) {
-  if (!paths.length) return new Map();
-  const data = check(await client.storage.from(BUCKET).createSignedUrls(paths, SIGNED_URL_TTL));
-  return new Map(data.filter((d) => d.signedUrl).map((d) => [d.path, d.signedUrl]));
+function sortWords(words) {
+  return [...words].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+}
+
+function present(words) {
+  return sortWords(words).map((w) => ({ ...w, imagePath: w.image ?? null, image: imageUrl(w.image) }));
 }
 
 export async function listWords() {
-  const rows = check(
-    await client
-      .from('words')
-      .select('id, name, caption, category, learned_on, image_path')
-      .order('learned_on', { ascending: false })
-      .order('id', { ascending: false })
-  );
-  const urls = await signedUrls(rows.map((r) => r.image_path).filter(Boolean));
-  return rows.map((r) => toWord(r, urls));
+  if (canEdit()) {
+    const head = await gh(`/git/refs/heads/${encodeURIComponent(await defaultBranch())}`);
+    lastCommit = head.object.sha;
+    return present(await readAt(lastCommit));
+  }
+  const res = await fetch('data/palavras.json', { cache: 'no-store' });
+  if (res.status === 404) return [];
+  if (!res.ok) throw new Error('Não consegui ler as palavrinhas');
+  return present(await res.json());
 }
 
-async function uploadImage(blob) {
+function newImage(blob) {
   const ext = blob.type.split('/')[1] || 'png';
-  const path = `${crypto.randomUUID()}.${ext}`;
-  check(await client.storage.from(BUCKET).upload(path, blob, { contentType: blob.type }));
-  return path;
+  return { path: `imagens/${crypto.randomUUID()}.${ext}`, blob };
 }
 
-async function removeImage(path) {
-  if (path) await client.storage.from(BUCKET).remove([path]);
-}
+const repoPath = (path) => `${DATA_DIR}/${path}`;
 
-function toRow(fields) {
-  return {
-    name: fields.name,
-    caption: fields.caption,
-    category: fields.category,
-    learned_on: fields.date,
-  };
+function toStored(fields, image) {
+  return { name: fields.name, caption: fields.caption, category: fields.category, date: fields.date, image };
 }
 
 // image: Blob para enviar uma nova, null para não ter imagem.
 export async function createWord(fields, image) {
-  const image_path = image ? await uploadImage(image) : null;
-  try {
-    check(await client.from('words').insert({ ...toRow(fields), image_path }));
-  } catch (err) {
-    await removeImage(image_path);
-    throw err;
-  }
+  const img = image ? newImage(image) : null;
+  const words = await commit(
+    `Nova palavrinha: ${fields.name}`,
+    (words) => [...words, { id: Math.max(0, ...words.map((w) => w.id)) + 1, ...toStored(fields, img?.path ?? null) }],
+    { add: img ? [{ path: repoPath(img.path), blob: img.blob }] : [] }
+  );
+  return present(words);
 }
 
 // image: Blob troca a imagem, null remove, undefined mantém a atual.
 export async function updateWord(word, fields, image) {
-  const row = toRow(fields);
-  let uploaded = null;
-  if (image) row.image_path = uploaded = await uploadImage(image);
-  else if (image === null) row.image_path = null;
-  try {
-    check(await client.from('words').update(row).eq('id', word.id));
-  } catch (err) {
-    await removeImage(uploaded);
-    throw err;
-  }
-  if (image !== undefined) await removeImage(word.imagePath);
+  const img = image ? newImage(image) : null;
+  const replacing = image !== undefined && word.imagePath;
+  const words = await commit(
+    `Edita palavrinha: ${fields.name}`,
+    (words) =>
+      words.map((w) =>
+        w.id === word.id ? { id: w.id, ...toStored(fields, image === undefined ? w.image : img?.path ?? null) } : w
+      ),
+    {
+      add: img ? [{ path: repoPath(img.path), blob: img.blob }] : [],
+      remove: replacing ? [repoPath(word.imagePath)] : [],
+    }
+  );
+  return present(words);
 }
 
 export async function deleteWord(word) {
-  check(await client.from('words').delete().eq('id', word.id));
-  await removeImage(word.imagePath);
+  const words = await commit(`Apaga palavrinha: ${word.name}`, (words) => words.filter((w) => w.id !== word.id), {
+    remove: word.imagePath ? [repoPath(word.imagePath)] : [],
+  });
+  return present(words);
 }
