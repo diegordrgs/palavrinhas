@@ -42,8 +42,6 @@ function todayIso() {
   return [d.getFullYear(), d.getMonth() + 1, d.getDate()].map((n) => String(n).padStart(2, '0')).join('-');
 }
 
-const fmtLong = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
-const fmtShort = new Intl.DateTimeFormat('pt-BR', { day: 'numeric', month: 'short' });
 const fmtMonth = new Intl.DateTimeFormat('pt-BR', { month: 'long', year: 'numeric' });
 
 function normalize(text) {
@@ -160,19 +158,28 @@ function visibleWords() {
   });
 }
 
-function groupByDate(words) {
-  const groups = new Map();
-  for (const w of words) {
-    if (!groups.has(w.date)) groups.set(w.date, []);
-    groups.get(w.date).push(w);
-  }
-  // As palavras já vêm do servidor da mais recente para a mais antiga.
-  return [...groups.entries()];
+// Número de cada palavra na ordem em que foi aprendida, como numa pokédex (nº 1 = a primeira).
+function numberWords(words) {
+  const sorted = [...words].sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
+  return new Map(sorted.map((w, i) => [w.id, i + 1]));
 }
 
-function createCard(word) {
+const fmtMonthShort = new Intl.DateTimeFormat('pt-BR', { month: 'short' });
+
+function cardDate(iso) {
+  const d = parseDate(iso);
+  const month = fmtMonthShort.format(d).replace('.', '');
+  return isMonthOnly(iso) ? `${month} ${d.getFullYear()}` : `${d.getDate()} ${month} ${d.getFullYear()}`;
+}
+
+function createCard(word, number) {
   const node = $('#card-template').content.firstElementChild.cloneNode(true);
   node.dataset.category = word.category;
+  node.dataset.month = word.date.slice(0, 7);
+  node.querySelector('.card-number').textContent = `nº ${String(number).padStart(3, '0')}`;
+  const date = node.querySelector('.card-date');
+  date.textContent = cardDate(word.date);
+  date.dateTime = word.date;
   node.querySelector('.frame-path').setAttribute('d', CARD_FRAME);
   node.setAttribute('aria-label', `${word.name}, ${CATEGORY_LABEL[word.category]}`);
 
@@ -238,29 +245,32 @@ function renderEmpty() {
   board.replaceChildren(wrap);
 }
 
-function renderTimeline(groups) {
+// Linha do tempo: anos e meses, cada mês leva ao primeiro card dele.
+function renderTimeline(words) {
   timeline.replaceChildren();
-  const months = new Map();
-  for (const [date, words] of groups) {
-    const key = date.slice(0, 7);
-    if (!months.has(key)) months.set(key, []);
-    months.get(key).push([date, words.length]);
+  const years = new Map();
+  for (const w of words) {
+    const [year, month] = w.date.split('-');
+    if (!years.has(year)) years.set(year, new Map());
+    const months = years.get(year);
+    months.set(month, (months.get(month) ?? 0) + 1);
   }
-  for (const [key, days] of months) {
+  for (const [year, months] of years) {
     const li = document.createElement('li');
     const label = document.createElement('div');
     label.className = 'timeline-month';
-    label.textContent = fmtMonth.format(parseDate(`${key}-01`));
+    label.textContent = year;
     const list = document.createElement('ol');
     list.className = 'timeline-days';
-    for (const [date, count] of days) {
+    for (const [month, count] of months) {
+      const key = `${year}-${month}`;
       const item = document.createElement('li');
       const a = document.createElement('a');
       a.className = 'timeline-link';
-      a.href = `#dia-${date}`;
-      a.dataset.date = date;
+      a.href = `#mes-${key}`;
+      a.dataset.month = key;
       a.innerHTML = '<span></span><span class="timeline-count"></span>';
-      a.firstChild.textContent = isMonthOnly(date) ? 'sem dia' : fmtShort.format(parseDate(date)).replace('.', '');
+      a.firstChild.textContent = capitalize(fmtMonth.format(parseDate(key)).split(' ')[0]);
       a.lastChild.textContent = count;
       item.append(a);
       list.append(item);
@@ -271,14 +281,15 @@ function renderTimeline(groups) {
 }
 
 let observer;
-function watchSections() {
+let clickedUntil = 0; // depois de clicar num mês, ele fica ativo enquanto a página rola até lá
+function watchCards() {
   observer?.disconnect();
-  const links = new Map([...timeline.querySelectorAll('.timeline-link')].map((a) => [a.dataset.date, a]));
-  const visible = new Set();
-  const setActive = (date) => {
-    for (const [d, a] of links) a.classList.toggle('active', d === date);
-    const active = links.get(date);
-    // Na faixa horizontal (celular), mantém o dia ativo à vista.
+  const links = new Map([...timeline.querySelectorAll('.timeline-link')].map((a) => [a.dataset.month, a]));
+  const visible = new Map(); // mês → quantos cards dele estão na tela
+  const setActive = (month) => {
+    for (const [m, a] of links) a.classList.toggle('active', m === month);
+    const active = links.get(month);
+    // Na faixa horizontal (celular), mantém o mês ativo à vista.
     const strip = timeline.parentElement;
     if (active && strip.scrollWidth > strip.clientWidth) {
       const left = active.offsetLeft - strip.offsetLeft;
@@ -290,16 +301,23 @@ function watchSections() {
   observer = new IntersectionObserver(
     (entries) => {
       for (const e of entries) {
-        if (e.isIntersecting) visible.add(e.target.dataset.date);
-        else visible.delete(e.target.dataset.date);
+        const m = e.target.dataset.month;
+        visible.set(m, (visible.get(m) ?? 0) + (e.isIntersecting ? 1 : -1));
       }
-      // O primeiro dia visível, na ordem da página, é o ativo.
-      const first = [...links.keys()].find((d) => visible.has(d));
+      if (Date.now() < clickedUntil) return;
+      // O primeiro mês visível, na ordem da página, é o ativo.
+      const first = [...links.keys()].find((m) => visible.get(m) > 0);
       if (first) setActive(first);
     },
-    { rootMargin: '-10% 0px -50% 0px' }
+    { rootMargin: '-15% 0px -45% 0px' }
   );
-  board.querySelectorAll('.day-section').forEach((s) => observer.observe(s));
+  board.querySelectorAll('.card').forEach((c) => observer.observe(c));
+  for (const [m, a] of links) {
+    a.addEventListener('click', () => {
+      clickedUntil = Date.now() + 1500;
+      setActive(m);
+    });
+  }
 }
 
 function render() {
@@ -308,36 +326,28 @@ function render() {
     ? `${total} ${total === 1 ? 'palavrinha aprendida' : 'palavrinhas aprendidas'} até agora`
     : '';
 
-  const groups = groupByDate(visibleWords());
-  renderTimeline(groups);
-  if (!groups.length) {
+  const words = visibleWords(); // já vêm da mais recente para a mais antiga
+  renderTimeline(words);
+  if (!words.length) {
     observer?.disconnect();
     return renderEmpty();
   }
 
-  const sections = groups.map(([date, words]) => {
-    const section = document.createElement('section');
-    section.className = 'day-section';
-    section.id = `dia-${date}`;
-    section.dataset.date = date;
-
-    const h = document.createElement('h2');
-    h.className = 'day-title';
-    const monthOnly = isMonthOnly(date);
-    h.textContent = monthOnly ? capitalize(fmtMonth.format(parseDate(date))) : fmtLong.format(parseDate(date));
-    const small = document.createElement('small');
-    small.textContent = `${monthOnly ? 'sem dia certo · ' : ''}${words.length} ${words.length === 1 ? 'palavra' : 'palavras'}`;
-    h.append(small);
-
-    const grid = document.createElement('div');
-    grid.className = 'grid';
-    grid.append(...words.map(createCard));
-
-    section.append(h, grid);
-    return section;
-  });
-  board.replaceChildren(...sections);
-  watchSections();
+  const numbers = numberWords(state.words);
+  const grid = document.createElement('div');
+  grid.className = 'grid';
+  const seen = new Set();
+  for (const w of words) {
+    const card = createCard(w, numbers.get(w.id));
+    const month = w.date.slice(0, 7);
+    if (!seen.has(month)) {
+      seen.add(month);
+      card.id = `mes-${month}`;
+    }
+    grid.append(card);
+  }
+  board.replaceChildren(grid);
+  watchCards();
 }
 
 // ---------- Formulário ----------

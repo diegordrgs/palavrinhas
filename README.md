@@ -55,4 +55,5 @@ Lembre de dar `git pull` depois para trazer as palavras novas.
 - **Clicar em um card** (no modo de edição): edita ou apaga a palavra.
 - **Busca**: procura no nome e na legenda (sem se importar com acentos).
 - **Categorias**: filtram os cards.
-- **Linha do tempo** (lateral, ou faixa no topo no celular): pula direto para um dia.
+- **Linha do tempo** (lateral, ou faixa no topo no celular): pula direto para um mês.
+- Cada card mostra o número da palavra na ordem em que foi aprendida (nº 001 = a primeira) e a data.

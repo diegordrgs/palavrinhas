@@ -262,36 +262,6 @@ body:not([data-mode="view"]) .view-only { display: none !important; }
 .timeline-link.active::before { background: var(--coral); border-color: var(--coral); }
 .timeline-count { color: var(--ink-soft); font-size: 15px; }
 
-.day-section { margin-bottom: 40px; }
-
-.day-title {
-  display: inline-block;
-  position: relative;
-  isolation: isolate;
-  margin: 0 0 18px;
-  font-family: var(--brush);
-  font-weight: 400;
-  font-size: 30px;
-}
-.day-title::after {
-  content: '';
-  position: absolute;
-  left: -4px;
-  right: -8px;
-  bottom: 2px;
-  height: 12px;
-  z-index: -1;
-  background: var(--comidas-bg);
-  border-radius: 8px 20px 6px 18px;
-  transform: rotate(-1deg);
-}
-.day-title small {
-  font-family: var(--hand);
-  font-size: 18px;
-  color: var(--ink-soft);
-  margin-left: 6px;
-}
-
 .grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -346,6 +316,20 @@ body[data-mode="edit"] .card { cursor: pointer; }
   align-items: center;
   text-align: center;
 }
+
+.card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 6px;
+  width: 100%;
+  margin-bottom: 4px;
+  font-size: 14px;
+  line-height: 1.1;
+  color: var(--ink-soft);
+}
+.card-number { font-family: var(--brush); font-size: 17px; color: var(--c); }
+.card-date { white-space: nowrap; }
 
 .card-art {
   position: relative;
