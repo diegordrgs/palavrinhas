@@ -6,5 +6,13 @@
     "category": "animais",
     "date": "2026-10-11",
     "image": "imagens/61c1de09-18f2-4ce1-97ba-2e5a8037d989.webp"
+  },
+  {
+    "id": 2,
+    "name": "Mama",
+    "caption": "Mamãe",
+    "category": "familia",
+    "date": "2025-08",
+    "image": "imagens/b31b7ca8-945c-4bf1-8fb1-f82d2217200c.webp"
   }
 ]
