@@ -193,74 +193,10 @@ body:not([data-mode="view"]) .view-only { display: none !important; }
 /* ---------- Corpo ---------- */
 
 .layout {
-  display: grid;
-  grid-template-columns: 210px minmax(0, 1fr);
-  gap: 32px;
   max-width: 1360px;
   margin: 0 auto;
   padding: 18px 24px 80px;
 }
-
-.timeline {
-  position: sticky;
-  top: 20px;
-  align-self: start;
-  max-height: calc(100vh - 40px);
-  overflow-y: auto;
-  padding: 18px 16px;
-  background: rgba(255, 255, 255, .7);
-  border: 2.5px dashed var(--line);
-  border-radius: 24px 14px 28px 12px;
-}
-
-.timeline-title {
-  margin: 0 0 10px;
-  font-family: var(--brush);
-  font-weight: 400;
-  font-size: 26px;
-  color: var(--coral);
-}
-
-.timeline-list, .timeline-days { list-style: none; margin: 0; padding: 0; }
-
-.timeline-month {
-  margin: 12px 0 4px;
-  font-size: 15px;
-  text-transform: uppercase;
-  letter-spacing: 1.5px;
-  color: var(--ink-soft);
-}
-.timeline-list > li:first-child .timeline-month { margin-top: 0; }
-
-.timeline-days { border-left: 3px dotted var(--coral-soft); margin-left: 6px; }
-
-.timeline-link {
-  position: relative;
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 4px 8px 4px 16px;
-  text-decoration: none;
-  color: var(--ink);
-  border-radius: 12px;
-  transition: background .15s;
-}
-.timeline-link::before {
-  content: '';
-  position: absolute;
-  left: -7px;
-  top: 50%;
-  width: 11px;
-  height: 11px;
-  margin-top: -6px;
-  border-radius: 50%;
-  background: var(--paper);
-  border: 2.5px solid var(--coral-soft);
-}
-.timeline-link:hover { background: #fdf0ea; }
-.timeline-link.active { background: var(--coral-soft); }
-.timeline-link.active::before { background: var(--coral); border-color: var(--coral); }
-.timeline-count { color: var(--ink-soft); font-size: 15px; }
 
 .grid {
   display: grid;
@@ -329,7 +265,6 @@ body[data-mode="edit"] .card { cursor: pointer; }
   color: var(--ink-soft);
 }
 .card-number { font-family: var(--brush); font-size: 17px; color: var(--c); }
-.card-date { white-space: nowrap; }
 
 .card-art {
   position: relative;
@@ -497,25 +432,7 @@ body[data-mode="edit"] .card { cursor: pointer; }
 .field textarea { border-radius: 18px 10px 20px 12px; font-size: 18px; }
 .field input:focus, .field textarea:focus { border-color: var(--animais); }
 
-.category-picker, .date-mode { display: flex; flex-wrap: wrap; gap: 8px; }
-.date-mode { margin-bottom: 8px; }
-.date-mode .chip { --c: var(--animais); --bg: var(--animais-bg); }
-
-.month-picker { display: flex; gap: 8px; }
-.month-picker select {
-  flex: 1;
-  min-width: 0;
-  padding: 7px 12px;
-  font-size: 20px;
-  background: #fff;
-  border: 2.5px solid var(--line);
-  border-radius: var(--wobble-radius);
-  outline: none;
-  cursor: pointer;
-}
-.month-picker select:focus { border-color: var(--animais); }
-.month-picker select:last-child { flex: 0 0 96px; }
-
+.category-picker { display: flex; flex-wrap: wrap; gap: 8px; }
 .form-error {
   min-height: 1.2em;
   margin: 10px 0 0;
@@ -539,33 +456,12 @@ body[data-mode="edit"] .card { cursor: pointer; }
 }
 
 @media (max-width: 960px) {
-  .layout { grid-template-columns: minmax(0, 1fr); padding: 12px 16px 60px; gap: 18px; }
+  .layout { padding: 12px 16px 60px; }
   .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
 
-  /* A linha do tempo vira uma faixa horizontal fixa no topo */
-  .timeline {
-    top: 0;
-    z-index: 5;
-    padding: 8px 10px;
-    max-height: none;
-    overflow-x: auto;
-    background: rgba(255, 250, 242, .95);
-    border-width: 0 0 2.5px;
-    border-radius: 0;
-    margin: 0 -16px;
-  }
-  .timeline-title { display: none; }
-  .timeline-list, .timeline-list > li, .timeline-days { display: flex; align-items: center; gap: 6px; }
-  .timeline-month { margin: 0 4px 0 8px; white-space: nowrap; font-size: 13px; }
-  .timeline-list > li:first-child .timeline-month { margin-left: 0; }
-  .timeline-days { border: 0; margin: 0; }
-  .timeline-link { white-space: nowrap; padding: 3px 12px; border: 2px solid var(--coral-soft); }
-  .timeline-link::before { display: none; }
-  .timeline-count { display: none; }
 
   .doodle-cloud, .doodle-heart { display: none; }
   .doodle-sun { width: 56px; top: 10px; right: 10px; }
-  html { scroll-padding-top: 64px; }
 }
 
 @media (max-width: 420px) {

@@ -2,7 +2,7 @@
 
 Um caderninho digital das palavras que a Manu vai aprendendo. Cada palavra vira
 um card com imagem, nome, legenda e categoria (família, animais, comidas, outros),
-organizado por data: as mais recentes no topo e as mais antigas no rodapé.
+na ordem em que foram adicionadas: as mais recentes no topo e as mais antigas no rodapé.
 
 ## Onde ficam as palavras
 
@@ -51,9 +51,8 @@ Lembre de dar `git pull` depois para trazer as palavras novas.
 
 ## Uso
 
-- **+ Nova palavra**: abre o formulário (imagem, palavra, legenda, categoria e data em que aprendeu).
+- **+ Nova palavra**: abre o formulário (imagem, palavra, legenda e categoria).
 - **Clicar em um card** (no modo de edição): edita ou apaga a palavra.
 - **Busca**: procura no nome e na legenda (sem se importar com acentos).
 - **Categorias**: filtram os cards.
-- **Linha do tempo** (lateral, ou faixa no topo no celular): pula direto para um mês.
-- Cada card mostra o número da palavra na ordem em que foi aprendida (nº 001 = a primeira) e a data.
+- Cada card mostra o número da palavra na ordem em que foi adicionada (nº 001 = a primeira).

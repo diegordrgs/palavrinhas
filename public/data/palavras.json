@@ -4,7 +4,6 @@
     "name": "Bali",
     "caption": "Baleia",
     "category": "animais",
-    "date": "2026-10-11",
     "image": "imagens/61c1de09-18f2-4ce1-97ba-2e5a8037d989.webp"
   },
   {
@@ -12,7 +11,6 @@
     "name": "Mama",
     "caption": "Mamãe",
     "category": "familia",
-    "date": "2025-08",
     "image": "imagens/b31b7ca8-945c-4bf1-8fb1-f82d2217200c.webp"
   },
   {
@@ -20,7 +18,6 @@
     "name": "Papa",
     "caption": "",
     "category": "outros",
-    "date": null,
     "image": null
   },
   {
@@ -28,7 +25,6 @@
     "name": "Vovó",
     "caption": "",
     "category": "familia",
-    "date": null,
     "image": null
   },
   {
@@ -36,7 +32,6 @@
     "name": "Bibi",
     "caption": "",
     "category": "outros",
-    "date": null,
     "image": "imagens/4a408b2c-4a39-4113-b4b9-5a2877222f3f.webp"
   },
   {
@@ -44,7 +39,6 @@
     "name": "Minhao",
     "caption": "",
     "category": "outros",
-    "date": null,
     "image": "imagens/47a187d7-cccb-479d-99fb-1b0bf3934e69.webp"
   },
   {
@@ -52,7 +46,6 @@
     "name": "Viao",
     "caption": "",
     "category": "outros",
-    "date": null,
     "image": "imagens/99801231-66b6-4f90-946a-043731e8df05.webp"
   },
   {
@@ -60,7 +53,6 @@
     "name": "Té",
     "caption": "",
     "category": "outros",
-    "date": null,
     "image": "imagens/44687a95-a0f1-4c99-bc30-b84c578378fc.webp"
   },
   {
@@ -68,7 +60,6 @@
     "name": "Pipi",
     "caption": "",
     "category": "outros",
-    "date": null,
     "image": "imagens/a1cf3d09-a834-4ec3-a090-529cccbffd5c.webp"
   },
   {
@@ -76,7 +67,6 @@
     "name": "Iade",
     "caption": "",
     "category": "outros",
-    "date": null,
     "image": "imagens/b94f299d-608e-455d-abf7-ef4b559454fc.webp"
   },
   {
@@ -84,7 +74,6 @@
     "name": "Pipito",
     "caption": "",
     "category": "outros",
-    "date": null,
     "image": "imagens/e6542ab6-e9c6-4bd9-8437-611e5f0dd0b9.webp"
   },
   {
@@ -92,7 +81,6 @@
     "name": "Minina",
     "caption": "",
     "category": "outros",
-    "date": null,
     "image": "imagens/b3b9dae8-9ce8-4feb-8a77-ecd1d05e245f.webp"
   },
   {
@@ -100,7 +88,6 @@
     "name": "Bubu",
     "caption": "",
     "category": "outros",
-    "date": null,
     "image": "imagens/f6c5976a-1164-4dc5-b8d5-9bc85ef9c950.webp"
   },
   {
@@ -108,7 +95,6 @@
     "name": "Tartuga",
     "caption": "",
     "category": "animais",
-    "date": null,
     "image": "imagens/7c264cea-5127-4812-83ee-c2d2c00c0003.webp"
   },
   {
@@ -116,7 +102,6 @@
     "name": "Pió",
     "caption": "",
     "category": "outros",
-    "date": null,
     "image": "imagens/506b0b9f-f11f-46da-b753-546f26297315.webp"
   },
   {
@@ -124,7 +109,6 @@
     "name": "Pão",
     "caption": "",
     "category": "comidas",
-    "date": null,
     "image": null
   },
   {
@@ -132,7 +116,6 @@
     "name": "Bó",
     "caption": "",
     "category": "outros",
-    "date": null,
     "image": "imagens/912af380-dc3a-432d-93bd-b1bbada896ef.webp"
   },
   {
@@ -140,7 +123,6 @@
     "name": "Tator",
     "caption": "",
     "category": "outros",
-    "date": null,
     "image": "imagens/74821309-b56c-47fa-85fe-5447597a5cb9.webp"
   },
   {
@@ -148,7 +130,6 @@
     "name": "Batata",
     "caption": "",
     "category": "comidas",
-    "date": null,
     "image": "imagens/16814079-9712-45b8-a90e-2980bfcb731a.webp"
   },
   {
@@ -156,7 +137,6 @@
     "name": "Banana",
     "caption": "",
     "category": "comidas",
-    "date": null,
     "image": "imagens/b85b4afe-0bdf-46d7-8bf8-9cd06847e86a.webp"
   },
   {
@@ -164,7 +144,6 @@
     "name": "Auau",
     "caption": "",
     "category": "animais",
-    "date": null,
     "image": "imagens/5953c330-d48f-420e-b21b-9ac759196de0.webp"
   },
   {
@@ -172,7 +151,6 @@
     "name": "Seêia",
     "caption": "",
     "category": "outros",
-    "date": null,
     "image": "imagens/322a86b6-3651-43ea-a3d7-e17635130c74.webp"
   },
   {
@@ -180,7 +158,6 @@
     "name": "Titao",
     "caption": "",
     "category": "outros",
-    "date": null,
     "image": "imagens/5727b55b-0202-4139-8521-f28d8e614675.webp"
   },
   {
@@ -188,7 +165,6 @@
     "name": "Tubaão",
     "caption": "",
     "category": "animais",
-    "date": null,
     "image": "imagens/08b68552-92b4-482b-a96b-9058fc5e0835.webp"
   },
   {
@@ -196,7 +172,6 @@
     "name": "Miau",
     "caption": "",
     "category": "animais",
-    "date": null,
     "image": "imagens/f3960cd0-3629-44d0-99da-699dd38da275.webp"
   },
   {
@@ -204,7 +179,6 @@
     "name": "Fumiga",
     "caption": "",
     "category": "animais",
-    "date": null,
     "image": "imagens/7310300a-84cc-477e-b96c-06d73981190c.webp"
   },
   {
@@ -212,7 +186,6 @@
     "name": "Neném",
     "caption": "",
     "category": "outros",
-    "date": null,
     "image": "imagens/29e096be-3825-4588-abea-54f1f568200c.webp"
   },
   {
@@ -220,7 +193,6 @@
     "name": "Tetêeee",
     "caption": "",
     "category": "outros",
-    "date": null,
     "image": "imagens/23d94c0c-efe6-45b6-a0a3-c3a2e9a72d1a.webp"
   }
 ]

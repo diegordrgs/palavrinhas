@@ -73,11 +73,6 @@
   </header>
 
   <div class="layout">
-    <aside class="timeline" aria-label="Navegar pelas datas">
-      <h2 class="timeline-title">Linha do tempo</h2>
-      <ol class="timeline-list" id="timeline"></ol>
-    </aside>
-
     <main id="board" class="board" aria-live="polite"></main>
   </div>
 
@@ -114,20 +109,6 @@
         <fieldset class="field">
           <legend>Categoria</legend>
           <div class="category-picker" id="category-picker"></div>
-        </fieldset>
-
-        <fieldset class="field">
-          <legend>Quando aprendeu</legend>
-          <div class="date-mode" role="group" aria-label="Tipo de data">
-            <button type="button" class="chip" data-mode="day" aria-pressed="true">Dia certinho</button>
-            <button type="button" class="chip" data-mode="month" aria-pressed="false">Só o mês</button>
-            <button type="button" class="chip" data-mode="unknown" aria-pressed="false">Não lembro</button>
-          </div>
-          <input type="date" id="f-date" aria-label="Dia">
-          <div class="month-picker" id="f-month-picker" hidden>
-            <select id="f-month" aria-label="Mês"></select>
-            <select id="f-year" aria-label="Ano"></select>
-          </div>
         </fieldset>
 
         <p class="form-error" id="form-error" role="alert"></p>
@@ -177,7 +158,6 @@
       <div class="card-inner">
         <div class="card-top">
           <span class="card-number"></span>
-          <time class="card-date"></time>
         </div>
         <div class="card-art"></div>
         <h3 class="card-name"></h3>

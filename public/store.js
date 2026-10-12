@@ -169,8 +169,8 @@ function imageUrl(path) {
 }
 
 function sortWords(words) {
-  // Sem data ("não lembro") vai para o fim, junto das mais antigas.
-  return [...words].sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '') || b.id - a.id);
+  // As mais novas primeiro.
+  return [...words].sort((a, b) => b.id - a.id);
 }
 
 function present(words) {
@@ -197,7 +197,7 @@ function newImage(blob) {
 const repoPath = (path) => `${DATA_DIR}/${path}`;
 
 function toStored(fields, image) {
-  return { name: fields.name, caption: fields.caption, category: fields.category, date: fields.date, image };
+  return { name: fields.name, caption: fields.caption, category: fields.category, image };
 }
 
 // image: Blob para enviar uma nova, null para não ter imagem.
