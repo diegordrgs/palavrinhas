@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Palavrinhas da Manu</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Caveat+Brush&family=Patrick+Hand&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <!-- Filtros SVG que dão o traço de giz de cera -->
+  <svg class="defs" aria-hidden="true" width="0" height="0">
+    <defs>
+      <filter id="crayon" x="-5%" y="-5%" width="110%" height="110%">
+        <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="3" seed="3" result="grain"/>
+        <feColorMatrix in="grain" type="matrix" result="mask"
+          values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -2.2 2.1"/>
+        <feComposite in="SourceGraphic" in2="mask" operator="in" result="grainy"/>
+        <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="2" seed="7" result="wobble"/>
+        <feDisplacementMap in="grainy" in2="wobble" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+      <filter id="wobbly">
+        <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="2" result="wobble"/>
+        <feDisplacementMap in="SourceGraphic" in2="wobble" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <header class="top">
+    <div class="doodles" aria-hidden="true">
+      <svg class="doodle doodle-sun" viewBox="0 0 100 100">
+        <g filter="url(#crayon)" stroke="#f7c873" stroke-width="6" stroke-linecap="round" fill="none">
+          <circle cx="50" cy="50" r="20" fill="#fbe0a6"/>
+          <path d="M50 12v12M50 76v12M12 50h12M76 50h12M23 23l8 8M69 69l8 8M77 23l-8 8M31 69l-8 8"/>
+        </g>
+      </svg>
+      <svg class="doodle doodle-cloud" viewBox="0 0 140 80">
+        <path filter="url(#crayon)" fill="#cfe4f7" stroke="#9cc7ec" stroke-width="5"
+          d="M30 66c-14 0-22-10-20-21 2-10 12-16 22-13 3-13 16-22 30-19 10 2 17 9 20 18 4-4 11-6 17-4 12 3 18 15 13 26-3 8-10 13-19 13z"/>
+      </svg>
+      <svg class="doodle doodle-heart" viewBox="0 0 100 100">
+        <path filter="url(#crayon)" fill="#f9c4cc" stroke="#f29aa8" stroke-width="5"
+          d="M50 84C20 62 10 46 14 32c4-14 22-20 36-4 14-16 32-10 36 4 4 14-6 30-36 52z"/>
+      </svg>
+    </div>
+
+    <h1 class="title" aria-label="Palavrinhas da Manu">
+      <span class="title-word" id="title-letters"></span>
+    </h1>
+    <svg class="title-underline" viewBox="0 0 400 20" preserveAspectRatio="none" aria-hidden="true">
+      <path filter="url(#crayon)" d="M6 12 C 80 2, 160 18, 230 9 S 360 4, 394 11"
+        stroke="#f4a7a0" stroke-width="7" fill="none" stroke-linecap="round"/>
+    </svg>
+    <p class="subtitle" id="counter"></p>
+
+    <div class="toolbar">
+      <label class="search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M15.5 15.5 21 21"/></g></svg>
+        <input id="search" type="search" placeholder="Procurar palavrinha..." autocomplete="off">
+      </label>
+      <button class="btn btn-primary" id="new-word" type="button">
+        <span aria-hidden="true">+</span> Nova palavra
+      </button>
+    </div>
+
+    <nav class="filters" id="filters" aria-label="Categorias"></nav>
+  </header>
+
+  <div class="layout">
+    <aside class="timeline" aria-label="Navegar pelas datas">
+      <h2 class="timeline-title">Linha do tempo</h2>
+      <ol class="timeline-list" id="timeline"></ol>
+    </aside>
+
+    <main id="board" class="board" aria-live="polite"></main>
+  </div>
+
+  <!-- Formulário de nova palavra / edição -->
+  <dialog class="modal" id="modal">
+    <form method="dialog" class="modal-card" id="word-form" novalidate>
+      <svg class="modal-frame" viewBox="0 0 400 600" preserveAspectRatio="none" aria-hidden="true">
+        <path class="frame-path" filter="url(#wobbly)"/>
+      </svg>
+      <div class="modal-body">
+        <h2 class="modal-title" id="modal-title">Nova palavrinha</h2>
+
+        <label class="photo" id="photo-drop">
+          <input type="file" id="photo-input" accept="image/*" hidden>
+          <img id="photo-preview" alt="" hidden>
+          <span class="photo-hint" id="photo-hint">
+            <svg viewBox="0 0 48 48" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="11" width="36" height="28" rx="6"/><circle cx="24" cy="25" r="7"/><path d="M17 11l3-5h8l3 5"/></g></svg>
+            Escolher imagem
+          </span>
+        </label>
+        <button type="button" class="link-btn" id="photo-remove" hidden>remover imagem</button>
+
+        <label class="field">
+          <span>Palavra</span>
+          <input name="name" id="f-name" maxlength="60" required placeholder="baleia">
+        </label>
+
+        <label class="field">
+          <span>Legenda</span>
+          <textarea name="caption" id="f-caption" maxlength="280" rows="2"
+            placeholder="Falou vendo o livro do fundo do mar"></textarea>
+        </label>
+
+        <fieldset class="field">
+          <legend>Categoria</legend>
+          <div class="category-picker" id="category-picker"></div>
+        </fieldset>
+
+        <label class="field">
+          <span>Quando aprendeu</span>
+          <input type="date" name="date" id="f-date" required>
+        </label>
+
+        <p class="form-error" id="form-error" role="alert"></p>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-danger" id="delete-word" hidden>Apagar</button>
+          <span class="spacer"></span>
+          <button type="button" class="btn" id="cancel">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="save">Guardar</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <template id="card-template">
+    <article class="card" tabindex="0">
+      <svg class="card-frame" viewBox="0 0 200 300" preserveAspectRatio="none" aria-hidden="true">
+        <path class="frame-path" filter="url(#wobbly)"/>
+      </svg>
+      <div class="card-inner">
+        <div class="card-art"></div>
+        <h3 class="card-name"></h3>
+        <p class="card-caption"></p>
+        <span class="card-tag"></span>
+      </div>
+    </article>
+  </template>
+
+  <script src="/app.js" type="module"></script>
+</body>
+</html>
