@@ -1,1 +1,10 @@
-[]
+[
+  {
+    "id": 1,
+    "name": "Bali",
+    "caption": "Baleia",
+    "category": "animais",
+    "date": "2026-10-11",
+    "image": "imagens/61c1de09-18f2-4ce1-97ba-2e5a8037d989.webp"
+  }
+]
