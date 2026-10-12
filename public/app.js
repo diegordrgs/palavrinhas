@@ -27,10 +27,15 @@ const form = $('#word-form');
 
 // ---------- Utilidades ----------
 
+// Datas são 'AAAA-MM-DD' ou só 'AAAA-MM' quando não se sabe o dia.
 function parseDate(iso) {
-  const [y, m, d] = iso.split('-').map(Number);
+  const [y, m, d = 1] = iso.split('-').map(Number);
   return new Date(y, m - 1, d);
 }
+
+const isMonthOnly = (iso) => iso.length === 7;
+
+const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
 
 function todayIso() {
   const d = new Date();
@@ -255,7 +260,7 @@ function renderTimeline(groups) {
       a.href = `#dia-${date}`;
       a.dataset.date = date;
       a.innerHTML = '<span></span><span class="timeline-count"></span>';
-      a.firstChild.textContent = fmtShort.format(parseDate(date)).replace('.', '');
+      a.firstChild.textContent = isMonthOnly(date) ? 'sem dia' : fmtShort.format(parseDate(date)).replace('.', '');
       a.lastChild.textContent = count;
       item.append(a);
       list.append(item);
@@ -318,9 +323,10 @@ function render() {
 
     const h = document.createElement('h2');
     h.className = 'day-title';
-    h.textContent = fmtLong.format(parseDate(date));
+    const monthOnly = isMonthOnly(date);
+    h.textContent = monthOnly ? capitalize(fmtMonth.format(parseDate(date))) : fmtLong.format(parseDate(date));
     const small = document.createElement('small');
-    small.textContent = `${words.length} ${words.length === 1 ? 'palavra' : 'palavras'}`;
+    small.textContent = `${monthOnly ? 'sem dia certo · ' : ''}${words.length} ${words.length === 1 ? 'palavra' : 'palavras'}`;
     h.append(small);
 
     const grid = document.createElement('div');
@@ -356,12 +362,63 @@ function openModal(word) {
   $('#delete-word').hidden = !word;
   $('#f-name').value = word?.name ?? '';
   $('#f-caption').value = word?.caption ?? '';
-  $('#f-date').value = word?.date ?? todayIso();
+  const date = word?.date ?? todayIso();
+  const monthOnly = isMonthOnly(date);
+  $('#f-date').value = monthOnly ? '' : date;
   $('#f-date').max = todayIso();
+  fillMonthPicker(date.slice(0, 4), date.slice(5, 7));
+  setDateMode(monthOnly ? 'month' : 'day');
   renderCategoryPicker(word?.category ?? state.category ?? 'outros');
   setPreview(word?.image ?? null);
   modal.showModal();
   $('#f-name').focus();
+}
+
+// ---------- Data: dia certinho ou só o mês ----------
+
+const MONTHS = Array.from({ length: 12 }, (_, i) =>
+  capitalize(new Intl.DateTimeFormat('pt-BR', { month: 'long' }).format(new Date(2020, i, 1)))
+);
+
+function fillMonthPicker(year, month) {
+  const current = new Date().getFullYear();
+  const years = [];
+  for (let y = current; y >= Math.min(current - 6, Number(year)); y--) years.push(String(y));
+  $('#f-year').replaceChildren(...years.map((y) => new Option(y, y, false, y === year)));
+  $('#f-month').replaceChildren(
+    ...MONTHS.map((label, i) => {
+      const value = String(i + 1).padStart(2, '0');
+      return new Option(label, value, false, value === month);
+    })
+  );
+}
+
+let dateMode = 'day';
+function setDateMode(mode) {
+  dateMode = mode;
+  for (const b of document.querySelectorAll('.date-mode .chip')) {
+    b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
+  }
+  $('#f-date').hidden = mode !== 'day';
+  $('#f-month-picker').hidden = mode !== 'month';
+}
+
+function readDate() {
+  if (dateMode === 'month') return `${$('#f-year').value}-${$('#f-month').value}`;
+  return $('#f-date').value;
+}
+
+for (const b of document.querySelectorAll('.date-mode .chip')) {
+  b.addEventListener('click', () => {
+    // Ao trocar, leva junto o que já estava escolhido.
+    if (b.dataset.mode === 'month' && $('#f-date').value) {
+      fillMonthPicker($('#f-date').value.slice(0, 4), $('#f-date').value.slice(5, 7));
+    } else if (b.dataset.mode === 'day' && !$('#f-date').value) {
+      const month = `${$('#f-year').value}-${$('#f-month').value}`;
+      $('#f-date').value = month === todayIso().slice(0, 7) ? todayIso() : `${month}-01`;
+    }
+    setDateMode(b.dataset.mode);
+  });
 }
 
 async function handleFile(file) {
@@ -379,12 +436,20 @@ form.addEventListener('submit', async (e) => {
   const payload = {
     name: $('#f-name').value.trim(),
     caption: $('#f-caption').value.trim(),
-    date: $('#f-date').value,
+    date: readDate(),
     category: $('#category-picker [aria-pressed="true"]')?.dataset.value ?? 'outros',
   };
   if (!payload.name) {
     $('#form-error').textContent = 'Escreva a palavrinha 🙂';
     return $('#f-name').focus();
+  }
+  if (!payload.date) {
+    $('#form-error').textContent = 'Escolha quando ela aprendeu';
+    return;
+  }
+  if (payload.date > todayIso()) {
+    $('#form-error').textContent = 'Essa data ainda não chegou 🙂';
+    return;
   }
 
   const save = $('#save');

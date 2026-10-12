@@ -6,5 +6,85 @@
     "category": "animais",
     "date": "2026-10-11",
     "image": "imagens/61c1de09-18f2-4ce1-97ba-2e5a8037d989.webp"
+  },
+  {
+    "id": 2,
+    "name": "mamãe",
+    "caption": "A primeira de todas, olhando bem nos olhos",
+    "category": "familia",
+    "date": "2026-03-02",
+    "image": null
+  },
+  {
+    "id": 3,
+    "name": "papai",
+    "caption": "Dois dias depois da mamãe",
+    "category": "familia",
+    "date": "2026-03-04",
+    "image": null
+  },
+  {
+    "id": 4,
+    "name": "au-au",
+    "caption": "Para todo cachorro que passa na rua",
+    "category": "animais",
+    "date": "2026-04",
+    "image": null
+  },
+  {
+    "id": 5,
+    "name": "água",
+    "caption": "Pede apontando para o copo",
+    "category": "comidas",
+    "date": "2026-05-10",
+    "image": null
+  },
+  {
+    "id": 6,
+    "name": "bola",
+    "caption": "Joga longe e sai correndo atrás",
+    "category": "outros",
+    "date": "2026-05-10",
+    "image": null
+  },
+  {
+    "id": 7,
+    "name": "banana",
+    "caption": "No café da manhã, com a mão cheia",
+    "category": "comidas",
+    "date": "2026-06",
+    "image": null
+  },
+  {
+    "id": 8,
+    "name": "vovó",
+    "caption": "No telefone, de vídeo",
+    "category": "familia",
+    "date": "2026-07-21",
+    "image": null
+  },
+  {
+    "id": 9,
+    "name": "peixe",
+    "caption": "No livro do fundo do mar",
+    "category": "animais",
+    "date": "2026-08-15",
+    "image": "imagens/exemplo-baleia.webp"
+  },
+  {
+    "id": 10,
+    "name": "tchau",
+    "caption": "Acenando para todo mundo no mercado",
+    "category": "outros",
+    "date": "2026-09-03",
+    "image": null
+  },
+  {
+    "id": 11,
+    "name": "pão",
+    "caption": "Pediu mais um pedacinho",
+    "category": "comidas",
+    "date": "2026-10-11",
+    "image": null
   }
 ]

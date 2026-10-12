@@ -42,7 +42,7 @@ body {
 
 .defs { position: absolute; width: 0; height: 0; }
 
-button, input, textarea { font: inherit; color: var(--ink); }
+button, input, textarea, select { font: inherit; color: var(--ink); }
 
 /* ---------- Topo ---------- */
 
@@ -513,7 +513,24 @@ body[data-mode="edit"] .card { cursor: pointer; }
 .field textarea { border-radius: 18px 10px 20px 12px; font-size: 18px; }
 .field input:focus, .field textarea:focus { border-color: var(--animais); }
 
-.category-picker { display: flex; flex-wrap: wrap; gap: 8px; }
+.category-picker, .date-mode { display: flex; flex-wrap: wrap; gap: 8px; }
+.date-mode { margin-bottom: 8px; }
+.date-mode .chip { --c: var(--animais); --bg: var(--animais-bg); }
+
+.month-picker { display: flex; gap: 8px; }
+.month-picker select {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 12px;
+  font-size: 20px;
+  background: #fff;
+  border: 2.5px solid var(--line);
+  border-radius: var(--wobble-radius);
+  outline: none;
+  cursor: pointer;
+}
+.month-picker select:focus { border-color: var(--animais); }
+.month-picker select:last-child { flex: 0 0 96px; }
 
 .form-error {
   min-height: 1.2em;

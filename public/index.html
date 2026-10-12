@@ -116,10 +116,18 @@
           <div class="category-picker" id="category-picker"></div>
         </fieldset>
 
-        <label class="field">
-          <span>Quando aprendeu</span>
-          <input type="date" name="date" id="f-date" required>
-        </label>
+        <fieldset class="field">
+          <legend>Quando aprendeu</legend>
+          <div class="date-mode" role="group" aria-label="Tipo de data">
+            <button type="button" class="chip" data-mode="day" aria-pressed="true">Dia certinho</button>
+            <button type="button" class="chip" data-mode="month" aria-pressed="false">Só o mês</button>
+          </div>
+          <input type="date" id="f-date" aria-label="Dia">
+          <div class="month-picker" id="f-month-picker" hidden>
+            <select id="f-month" aria-label="Mês"></select>
+            <select id="f-year" aria-label="Ano"></select>
+          </div>
+        </fieldset>
 
         <p class="form-error" id="form-error" role="alert"></p>
 
