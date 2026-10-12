@@ -33,7 +33,11 @@ function parseDate(iso) {
   return new Date(y, m - 1, d);
 }
 
-const isMonthOnly = (iso) => iso.length === 7;
+const isMonthOnly = (iso) => iso?.length === 7;
+
+// Chave do mês de uma palavra; quem não tem data ("não lembro") fica junto num grupo só.
+const NO_DATE = 'sem-data';
+const monthKey = (word) => (word.date ? word.date.slice(0, 7) : NO_DATE);
 
 const capitalize = (text) => text.charAt(0).toUpperCase() + text.slice(1);
 
@@ -160,13 +164,14 @@ function visibleWords() {
 
 // Número de cada palavra na ordem em que foi aprendida, como numa pokédex (nº 1 = a primeira).
 function numberWords(words) {
-  const sorted = [...words].sort((a, b) => a.date.localeCompare(b.date) || a.id - b.id);
+  const sorted = [...words].sort((a, b) => (a.date ?? '').localeCompare(b.date ?? '') || a.id - b.id);
   return new Map(sorted.map((w, i) => [w.id, i + 1]));
 }
 
 const fmtMonthShort = new Intl.DateTimeFormat('pt-BR', { month: 'short' });
 
 function cardDate(iso) {
+  if (!iso) return 'sem data';
   const d = parseDate(iso);
   const month = fmtMonthShort.format(d).replace('.', '');
   return isMonthOnly(iso) ? `${month} ${d.getFullYear()}` : `${d.getDate()} ${month} ${d.getFullYear()}`;
@@ -175,11 +180,11 @@ function cardDate(iso) {
 function createCard(word, number) {
   const node = $('#card-template').content.firstElementChild.cloneNode(true);
   node.dataset.category = word.category;
-  node.dataset.month = word.date.slice(0, 7);
+  node.dataset.month = monthKey(word);
   node.querySelector('.card-number').textContent = `nº ${String(number).padStart(3, '0')}`;
   const date = node.querySelector('.card-date');
   date.textContent = cardDate(word.date);
-  date.dateTime = word.date;
+  if (word.date) date.dateTime = word.date;
   node.querySelector('.frame-path').setAttribute('d', CARD_FRAME);
   node.setAttribute('aria-label', `${word.name}, ${CATEGORY_LABEL[word.category]}`);
 
@@ -249,7 +254,12 @@ function renderEmpty() {
 function renderTimeline(words) {
   timeline.replaceChildren();
   const years = new Map();
+  let undated = 0;
   for (const w of words) {
+    if (!w.date) {
+      undated++;
+      continue;
+    }
     const [year, month] = w.date.split('-');
     if (!years.has(year)) years.set(year, new Map());
     const months = years.get(year);
@@ -275,6 +285,25 @@ function renderTimeline(words) {
       item.append(a);
       list.append(item);
     }
+    li.append(label, list);
+    timeline.append(li);
+  }
+  if (undated) {
+    const li = document.createElement('li');
+    const label = document.createElement('div');
+    label.className = 'timeline-month';
+    label.textContent = 'sem data';
+    const list = document.createElement('ol');
+    list.className = 'timeline-days';
+    const item = document.createElement('li');
+    const a = document.createElement('a');
+    a.className = 'timeline-link';
+    a.href = `#mes-${NO_DATE}`;
+    a.dataset.month = NO_DATE;
+    a.innerHTML = '<span>Não lembro</span><span class="timeline-count"></span>';
+    a.lastChild.textContent = undated;
+    item.append(a);
+    list.append(item);
     li.append(label, list);
     timeline.append(li);
   }
@@ -339,7 +368,7 @@ function render() {
   const seen = new Set();
   for (const w of words) {
     const card = createCard(w, numbers.get(w.id));
-    const month = w.date.slice(0, 7);
+    const month = monthKey(w);
     if (!seen.has(month)) {
       seen.add(month);
       card.id = `mes-${month}`;
@@ -372,12 +401,13 @@ function openModal(word) {
   $('#delete-word').hidden = !word;
   $('#f-name').value = word?.name ?? '';
   $('#f-caption').value = word?.caption ?? '';
-  const date = word?.date ?? todayIso();
+  const date = word ? word.date : todayIso(); // null = "não lembro"
   const monthOnly = isMonthOnly(date);
-  $('#f-date').value = monthOnly ? '' : date;
+  $('#f-date').value = date && !monthOnly ? date : '';
   $('#f-date').max = todayIso();
-  fillMonthPicker(date.slice(0, 4), date.slice(5, 7));
-  setDateMode(monthOnly ? 'month' : 'day');
+  const base = date ?? todayIso();
+  fillMonthPicker(base.slice(0, 4), base.slice(5, 7));
+  setDateMode(!date ? 'unknown' : monthOnly ? 'month' : 'day');
   renderCategoryPicker(word?.category ?? state.category ?? 'outros');
   setPreview(word?.image ?? null);
   modal.showModal();
@@ -414,6 +444,7 @@ function setDateMode(mode) {
 }
 
 function readDate() {
+  if (dateMode === 'unknown') return null;
   if (dateMode === 'month') return `${$('#f-year').value}-${$('#f-month').value}`;
   return $('#f-date').value;
 }
@@ -453,11 +484,11 @@ form.addEventListener('submit', async (e) => {
     $('#form-error').textContent = 'Escreva a palavrinha 🙂';
     return $('#f-name').focus();
   }
-  if (!payload.date) {
+  if (payload.date === '') {
     $('#form-error').textContent = 'Escolha quando ela aprendeu';
     return;
   }
-  if (payload.date > todayIso()) {
+  if (payload.date && payload.date > todayIso()) {
     $('#form-error').textContent = 'Essa data ainda não chegou 🙂';
     return;
   }

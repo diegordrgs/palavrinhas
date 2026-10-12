@@ -169,7 +169,8 @@ function imageUrl(path) {
 }
 
 function sortWords(words) {
-  return [...words].sort((a, b) => b.date.localeCompare(a.date) || b.id - a.id);
+  // Sem data ("não lembro") vai para o fim, junto das mais antigas.
+  return [...words].sort((a, b) => (b.date ?? '').localeCompare(a.date ?? '') || b.id - a.id);
 }
 
 function present(words) {
