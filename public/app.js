@@ -1,4 +1,4 @@
-import * as store from './store.js';
+import * as store from './store.js?v=2';
 
 const CATEGORIES = [
   { id: 'familia', label: 'Família' },
